@@ -1,5 +1,5 @@
 #Edit push github
-
+#haha
 import os
 import sys
 os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__)))
