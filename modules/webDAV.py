@@ -48,13 +48,13 @@ class ATT_DAV:
     # def delete_folder(self,remote_path):
     #     return self.client.clean(remote_path)
 
-app = ATT_DAV("192.168.3.101")
-content = {
-    "proxyHost": "192.168.3.3",
-    "proxyPort": 4009,
-    "sheetID": "1xsKri9sMyFM1P-MD_zaniYs2mc3ZPeQEqIbONz4k2Qk"
-}
+# app = ATT_DAV("192.168.3.101")
+# content = {
+#     "proxyHost": "192.168.3.3",
+#     "proxyPort": 4009,
+#     "sheetID": "1xsKri9sMyFM1P-MD_zaniYs2mc3ZPeQEqIbONz4k2Qk"
+# }
 # result = app.update_file('TelegramCS/configs/configs.json',content)
 # print(result)
-result = app.client.download_async(remote_path='TelegramCS/configs/configs.json',local_path=f'F:\py_project\TelegramIOS\modules\Temp\demo.json')
+# result = app.client.download_async(remote_path='TelegramCS/configs/configs.json',local_path=f'F:\py_project\TelegramIOS\modules\Temp\demo.json')
 

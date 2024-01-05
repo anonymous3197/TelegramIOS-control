@@ -1,42 +1,18 @@
+import os
 from paramiko import SSHClient,AutoAddPolicy
 import time
-from PyQt5 import QtCore, QtGui, QtQuickWidgets,QtWidgets 
-from PyQt5.QtCore import Qt , QThread,pyqtSignal,QThreadPool,QDateTime
+from PyQt5.QtGui import QIcon,QColor
+
+from PyQt5.QtCore import  Qt,QThread,pyqtSignal,QDateTime
 from PyQt5.QtWidgets import QWidget,QTableWidgetItem,QFileDialog,QTableWidget
-from qfluentwidgets import BodyLabel, CardWidget, CheckBox, PushButton, TableWidget, TextEdit,StateToolTip
+from qfluentwidgets import StateToolTip
 from modules.ATT import ATAPI
 from modules.webDAV import ATT_DAV
 from UI.Ui_homepage import Ui_Frame
-class ThreadRunScript(QThread):
-    signalResult = pyqtSignal (str)
-    def __init__(self,ip,pathScript,mode,parent = None):
-        super().__init__(parent)
-        self.ip =ip 
-        self.pathScript = pathScript
-        self.mode= mode
-    def run(self):
-            if self.mode == "STOP":
-                try:
-                    app = ATT_DAV(self.ip)
-                    content = {"close":1}
-                    result = app.update_file(r'TelegramCS_V2/configs/close_configs.json',content)
-                    self.signalResult.emit(f'{self.ip}: {self.mode}--->{result}')
-                except Exception as e:
-                    print(e)
-                        
-            elif self.mode == "START":
-                try:
-                    api = ATAPI(self.ip)
-                    result = api.run_code(self.pathScript)
-                    self.signalResult.emit(f'{self.ip}: {self.mode}--->{result}')
-
-                except:
-                    print("Errorrr")
-            
-                 
+from os.path import dirname,join
                 
 class ThreadLoadDevice(QThread):
-    deviceSignal = pyqtSignal(str)
+    deviceSignal = pyqtSignal(str,bool)
     finished = pyqtSignal()
 
     def __init__(self,ip,parent=None):
@@ -48,13 +24,18 @@ class ThreadLoadDevice(QThread):
                 app = ATT_DAV(f'192.168.3.{self.ip}')
                 result = app.client.list()
                 if result:
-                    self.deviceSignal.emit(host)
+                    client = ATAPI(host)
+                    result_state = client.get_running()
+                    if result_state != []:
+                        self.deviceSignal.emit(host,True)
+                    else:
+                        self.deviceSignal.emit(host,False)
             except:
                 pass
             self.finished.emit()
 class ThreadWorker(QThread):
     signalResult = pyqtSignal(str)
-
+    finished = pyqtSignal()
     def __init__(self, target_function,parent=None, *args, **kwargs):
         super().__init__(parent)
         self.target_function = target_function
@@ -62,13 +43,17 @@ class ThreadWorker(QThread):
         self.kwargs = kwargs
 
     def run(self):
+        print(self.args)
+        print(self.kwargs)
+
         try:
             result = self.target_function(*self.args, **self.kwargs)
-            self.signalResult.emit(f'Result--->{self.args[0]} ---->{result}')
+            action = self.kwargs['title']
+            self.signalResult.emit(f'{self.args[0]}: {action}--->{result}')
         except Exception as e:
             print(e)
             self.signalResult.emit(f'Error--->{e}')
-
+        self.finished.emit()
 class HomeInterface(QWidget,Ui_Frame):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -79,10 +64,11 @@ class HomeInterface(QWidget,Ui_Frame):
         self.initSlot()
     def initUI(self):
         #initTableView
-        self.uic.TableWidgetDevices.setColumnWidth(0,200)
+        self.uic.TableWidgetDevices.setColumnWidth(0,150)
+        self.uic.TableWidgetDevices.setColumnWidth(1,100)
         self.uic.TableWidgetDevices.setEditTriggers(QTableWidget.NoEditTriggers)
         self.uic.TableWidgetLogs.setColumnWidth(0,170)
-        self.uic.TableWidgetLogs.setColumnWidth(1,230)
+        self.uic.TableWidgetLogs.setColumnWidth(1,400)
         self.uic.TableWidgetLogs.setEditTriggers(QTableWidget.NoEditTriggers)
 
 
@@ -98,7 +84,7 @@ class HomeInterface(QWidget,Ui_Frame):
         self.uic.btnClearLogs.clicked.connect(self.btnClearLogs_Clicked)
         self.uic.btnSleep.clicked.connect(self.btnSleep_Clicked)
         self.uic.btnWakeup.clicked.connect(self.btnWakeup_Clicked)
-
+        self.uic.btnDownloadBk.clicked.connect(self.btnDownloadBk_Clicked)
 
         self.uic.btnRespring.clicked.connect(self.btnRespring_Clicked)
         self.uic.btnStartScript.clicked.connect(self.startScript_Clicked)
@@ -113,9 +99,11 @@ class HomeInterface(QWidget,Ui_Frame):
 
         # Thêm các mục được chọn vào mảng
         for item in selected_items:
-            self.selected_items.append(item.text())
+            #Thêm vào mảng nếu phần tử trong item khác ""
+            if item.text() != "":
+                self.selected_items.append(item.text())
         for selected_item in self.selected_items:
-                print(selected_item)
+                print('Selected item:', selected_item)
         # In danh sách các mục được chọn
         if len(self.selected_items) ==1:
             for selected_item in self.selected_items:
@@ -123,78 +111,117 @@ class HomeInterface(QWidget,Ui_Frame):
                 self.uic.CheckBoxSingle.setChecked(True)
         else:
             self.uic.CheckBoxMultil.setChecked(True)
+    def btnDownloadBk_Clicked(self):
+        print("btnDownloadBk_Clicked ")
+        self.loadStateTooltip()
+        workerThread = []
+        for ip in self.selected_items:
+            worker = ThreadWorker(self.downloadBk,self,ip,title="Download Backup")
+            worker.signalResult.connect(self.showLog)
+            worker.finished.connect(self.thread_finished)
+            workerThread.append(worker)
+        for w in workerThread:
+            w.start() 
+    def downloadBk(self,ip,title):
+        curdir = dirname(__file__)
+        app = ATT_DAV(ip)
+        results = app.client.list()
+        for result in results:
+            if 'TelegramCS' in result:
+                data_folder = result + 'data'
+                local_path = join(curdir,'BackupData',f'data_{ip}/{data_folder}')
+                os.makedirs(dirname(local_path),exist_ok=True)
+                app.client.download_sync(remote_path=data_folder,local_path=local_path)
+        return True
+
+
     def btnWakeup_Clicked(self):
         print("btnWakeup_Clicked ")
         workerThread = []
         for ip in self.selected_items:
-            worker = ThreadWorker(self.wakeupIOS,self,ip)
+            worker = ThreadWorker(self.wakeupIOS,self,ip,title="Wakeup Device")
             worker.signalResult.connect(self.showLog)
             workerThread.append(worker)
         for w in workerThread:
             w.start()
-    def wakeupIOS(self,ip):
-        print("Sleep Device ~~")
-        client = SSHClient()
-        client.set_missing_host_key_policy(AutoAddPolicy())
-        client.connect(ip, username='root', password='alpine')
-        stdin, stdout, stderr = client.exec_command("activator send libactivator.system.homebutton")
-        time.sleep(.4)
-        stdin, stdout, stderr = client.exec_command("activator send libactivator.system.homebutton")
-
-        client.close()
-        return True
+    def wakeupIOS(self,ip ,title):
+        try:
+            client = SSHClient()
+            client.set_missing_host_key_policy(AutoAddPolicy())
+            client.connect(ip, username='root', password='alpine')
+            stdin, stdout, stderr = client.exec_command("activator send libactivator.system.homebutton")
+            time.sleep(.4)
+            stdin, stdout, stderr = client.exec_command("activator send libactivator.system.homebutton")
+            client.close()
+            return True
+        except Exception as e:
+            print(e)
+            return False
+        
 
 
     def btnSleep_Clicked(self):
         print("btnSleep_Clicked ")
         workerThread = []
         for ip in self.selected_items:
-            worker = ThreadWorker(self.sleepIOS,self,ip)
+            worker = ThreadWorker(self.sleepIOS,self,ip,title="Sleep Device")
             worker.signalResult.connect(self.showLog)
             workerThread.append(worker)
         for w in workerThread:
             w.start()
-    def sleepIOS(self,ip):
-        print("Sleep Device ~~")
-        client = SSHClient()
-        client.set_missing_host_key_policy(AutoAddPolicy())
-        client.connect(ip, username='root', password='alpine')
-        stdin, stdout, stderr = client.exec_command("activator send libactivator.system.sleepbutton")
-        client.close()
-        return True
+    def sleepIOS(self,ip,title):
+        try:
+            client = SSHClient()
+            client.set_missing_host_key_policy(AutoAddPolicy())
+            client.connect(ip, username='root', password='alpine')
+            stdin, stdout, stderr = client.exec_command("activator send libactivator.system.sleepbutton")
+            client.close()
+            return True
+        except Exception as e:
+            print(e)
+            return False
 
     def btnClearLogs_Clicked(self):
         print("btnClearLogs_Clicked ")
         workerThread = []
         for ip in self.selected_items:
-            worker = ThreadWorker(self.clearLog,self,ip)
+            worker = ThreadWorker(self.clearLog,self,ip,title="Clear Logs")
             worker.signalResult.connect(self.showLog)
             workerThread.append(worker)
         for w in workerThread:
             w.start()
-    def clearLog(self,ip):
-        api = ATAPI(ip)
-        result = api.clear_log()
-        return result
-    def Upload_File(self,ip,local_path,remote_path):
-        app = ATT_DAV(ip)
-        result = app.upload_folder(local_path,remote_path)
-        return result
+    def clearLog(self,ip,title):
+        try:
+            api = ATAPI(ip)
+            result = api.clear_log()
+            return result
+        except Exception as e:
+            print(e)
+            return False
+ 
     def btnUpload_Clicked(self):
         localPath = self.uic.txtPath.toPlainText()
         remotePath =  self.uic.txtPathRemote.toPlainText()
         workerThread = []
         for ip in self.selected_items:
-            worker = ThreadWorker(self.Upload_File,self,ip,localPath,remotePath)
+            worker = ThreadWorker(self.Upload_File,self,ip,localPath,remotePath,title="Upload File")
             worker.signalResult.connect(self.showLog)
             workerThread.append(worker)
         for w in workerThread:
             w.start()
+    def Upload_File(self,ip,local_path,remote_path,title):
+        try:
+            app = ATT_DAV(ip)
+            result = app.upload_folder(local_path,remote_path)
+            return result
+        except Exception as e:
+            print(e)
+            return False
     def btnRespring_Clicked(self):
         print("btnRespring_Clicked ")
         workerThread = []
         for ip in self.selected_items:
-            worker = ThreadWorker(self.reSpringIOS,self,ip)
+            worker = ThreadWorker(self.reSpringIOS,self,ip,title="Respring Device")
             worker.signalResult.connect(self.showLog)
             workerThread.append(worker)
         for w in workerThread:
@@ -204,7 +231,7 @@ class HomeInterface(QWidget,Ui_Frame):
         mode = "START"
         workerThread = []
         for ip in self.selected_items:
-            worker = ThreadWorker(self.runScript,self,mode,ip,pathScript)
+            worker = ThreadWorker(self.runScript,self,ip,mode,pathScript,title="Start Script")
             worker.signalResult.connect(self.showLog)
             workerThread.append(worker)
         for w in workerThread:
@@ -216,38 +243,40 @@ class HomeInterface(QWidget,Ui_Frame):
         mode = "STOP"
         workerThread = []
         for ip in self.selected_items:
-            worker = ThreadWorker(self.runScript,self,mode,ip,pathScript)
+            worker = ThreadWorker(self.runScript,self,ip,mode,pathScript,title="Stop Script")
             worker.signalResult.connect(self.showLog)
             workerThread.append(worker)
         for w in workerThread:
             w.start()
 
     
-    def runScript(self,mode,ip,pathScript):
+    def runScript(self,ip,mode,pathScript,title):
         if mode == "STOP":
-            print("Vao day roi nhe")
             app = ATT_DAV(ip)
             content = {"close": 1}
             result = app.update_file(r'TelegramCS_V3/configs/close_configs.json', content)
             return result
         elif mode == "START":
-            print("Vao day")
             api = ATAPI(ip)
             result = api.run_code(pathScript)
             return result
        
 
-    def reSpringIOS(self,ip):
-        print("Respring Device ~~")
-        client = SSHClient()
-        client.set_missing_host_key_policy(AutoAddPolicy())
-        client.connect(ip, username='root', password='alpine')
-        stdin, stdout, stderr = client.exec_command("activator send libactivator.system.respring")
-        time.sleep(5)
-        stdin, stdout, stderr = client.exec_command("activator send libactivator.system.homebutton")
+    def reSpringIOS(self,ip,title):
+        try:
+            client = SSHClient()
+            client.set_missing_host_key_policy(AutoAddPolicy())
+            client.connect(ip, username='root', password='alpine')
+            stdin, stdout, stderr = client.exec_command("activator send libactivator.system.respring")
+            time.sleep(5)
+            stdin, stdout, stderr = client.exec_command("activator send libactivator.system.homebutton")
 
-        client.close()
-        return True
+            client.close()
+            return True
+       
+        except Exception as e:
+            print(e)
+            return False
 
 
    
@@ -258,6 +287,7 @@ class HomeInterface(QWidget,Ui_Frame):
         self.uic.TableWidgetLogs.setRowCount(current_row + 1)
         self.uic.TableWidgetLogs.setItem(current_row, 0, QTableWidgetItem(datetime_str))
         self.uic.TableWidgetLogs.setItem(current_row, 1, QTableWidgetItem(data))
+        self.uic.TableWidgetLogs.scrollToBottom()
                 
     def _ImportFileScript(self):
         options = QFileDialog.Options()
@@ -281,14 +311,15 @@ class HomeInterface(QWidget,Ui_Frame):
                 self.uic.CheckBoxMultil.setChecked(False)
                 self.cbSingle = True
                 self.cbMultil = not self.cbSingle
+    def loadStateTooltip(self):
+        self.count =0
+        self.workerThreadGetDevice=[]
+        self.stateTooltip = None
+        self.stateTooltip = StateToolTip('Running', 'Please wait ..', self)
+        self.stateTooltip.move(10, 10)
+        self.stateTooltip.show()
     def loadAllDevices(self):
-            self.count =0
-            self.workerThreadGetDevice=[]
-            self.stateTooltip = None
-            self.stateTooltip = StateToolTip('Running', 'Please wait ..', self)
-            self.stateTooltip.move(10, 10)
-            self.stateTooltip.show()
-
+            self.loadStateTooltip()
             #Clear Table 
             self.uic.TableWidgetDevices.clearContents()
             self.uic.TableWidgetDevices.setRowCount(0)
@@ -305,11 +336,22 @@ class HomeInterface(QWidget,Ui_Frame):
             self.stateTooltip.setContent('Load Devices OK 😆')
             self.stateTooltip.setState(True)
             self.uic.TableWidgetDevices.sortItems(0)
+
         
-    def UpdateList(self,data):
+    def UpdateList(self,data,state):
         current_row = self.uic.TableWidgetDevices.rowCount()
         self.uic.TableWidgetDevices.setRowCount(current_row + 1)
         self.uic.TableWidgetDevices.setItem(current_row, 0, QTableWidgetItem(data))
+        if state:
+            item = QTableWidgetItem()
+            item.setIcon(QIcon(r'F:\py_project\TelegramIOS-control\resource\images\green.ico'))
+            item.setBackground(QColor('red'))
+            self.uic.TableWidgetDevices.setItem(current_row, 1, item)
+        else:
+            item = QTableWidgetItem()
+            item.setIcon(QIcon(r'F:\py_project\TelegramIOS-control\resource\images\red.ico'))
+            item.setBackground(QColor('red'))
+            self.uic.TableWidgetDevices.setItem(current_row, 1, item)
     def dataRevice(self,data):
         self.allIp = data
         for i, dt in enumerate(data):

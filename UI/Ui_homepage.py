@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'f:\py_project\TelegramIOS\UI\homepage.ui'
+# Form implementation generated from reading ui file 'f:\py_project\TelegramIOS-control\UI\homepage.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -25,7 +25,7 @@ class Ui_Frame(object):
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.widget_2 = QtWidgets.QWidget(self.widget)
-        self.widget_2.setMinimumSize(QtCore.QSize(200, 0))
+        self.widget_2.setMinimumSize(QtCore.QSize(300, 0))
         self.widget_2.setMaximumSize(QtCore.QSize(200, 16777215))
         self.widget_2.setObjectName("widget_2")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.widget_2)
@@ -42,10 +42,12 @@ class Ui_Frame(object):
         self.verticalLayout_2.addWidget(self.BodyLabel)
         self.TableWidgetDevices = TableWidget(self.CardWidget)
         self.TableWidgetDevices.setObjectName("TableWidgetDevices")
-        self.TableWidgetDevices.setColumnCount(1)
+        self.TableWidgetDevices.setColumnCount(2)
         self.TableWidgetDevices.setRowCount(0)
         item = QtWidgets.QTableWidgetItem()
         self.TableWidgetDevices.setHorizontalHeaderItem(0, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.TableWidgetDevices.setHorizontalHeaderItem(1, item)
         self.TableWidgetDevices.horizontalHeader().setVisible(False)
         self.TableWidgetDevices.verticalHeader().setVisible(False)
         self.verticalLayout_2.addWidget(self.TableWidgetDevices)
@@ -109,7 +111,7 @@ class Ui_Frame(object):
         self.widget_8.setMaximumSize(QtCore.QSize(16777215, 40))
         self.widget_8.setObjectName("widget_8")
         self.horizontalLayout_5 = QtWidgets.QHBoxLayout(self.widget_8)
-        self.horizontalLayout_5.setContentsMargins(9, 0, 0, 0)
+        self.horizontalLayout_5.setContentsMargins(5, 5, 0, 0)
         self.horizontalLayout_5.setSpacing(0)
         self.horizontalLayout_5.setObjectName("horizontalLayout_5")
         self.txtPathRemote = TextEdit(self.widget_8)
@@ -143,10 +145,9 @@ class Ui_Frame(object):
         self.btnWakeup = PushButton(self.groupBox)
         self.btnWakeup.setObjectName("btnWakeup")
         self.gridLayout_2.addWidget(self.btnWakeup, 1, 1, 1, 1)
-        self.PushButton_6 = PushButton(self.groupBox)
-        self.PushButton_6.setText("")
-        self.PushButton_6.setObjectName("PushButton_6")
-        self.gridLayout_2.addWidget(self.PushButton_6, 1, 2, 1, 1)
+        self.btnDownloadBk = PushButton(self.groupBox)
+        self.btnDownloadBk.setObjectName("btnDownloadBk")
+        self.gridLayout_2.addWidget(self.btnDownloadBk, 1, 2, 1, 1)
         self.verticalLayout_7.addWidget(self.groupBox)
         self.verticalLayout_4.addWidget(self.widget_9)
         self.widget_7 = QtWidgets.QWidget(self.CardWidget_2)
@@ -204,6 +205,8 @@ class Ui_Frame(object):
         self.BodyLabel.setText(_translate("Frame", "Multil Devices"))
         item = self.TableWidgetDevices.horizontalHeaderItem(0)
         item.setText(_translate("Frame", "Device"))
+        item = self.TableWidgetDevices.horizontalHeaderItem(1)
+        item.setText(_translate("Frame", "State"))
         self.btnLoadDevice.setText(_translate("Frame", "Load devices"))
         self.BodyLabel_2.setText(_translate("Frame", "IP Device"))
         self.txtIpDevice.setPlaceholderText(_translate("Frame", "Ex : 192.168.3.3"))
@@ -223,6 +226,7 @@ class Ui_Frame(object):
         self.btnClearLogs.setText(_translate("Frame", "Clear Log"))
         self.btnSleep.setText(_translate("Frame", "Sleep"))
         self.btnWakeup.setText(_translate("Frame", "WakeUp"))
+        self.btnDownloadBk.setText(_translate("Frame", "Download BK"))
         self.btnStartScript.setText(_translate("Frame", "Start Script"))
         self.btnStopScript.setText(_translate("Frame", "Stop Script"))
         self.BodyLabel_3.setText(_translate("Frame", "Logs"))

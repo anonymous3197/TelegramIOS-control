@@ -1,52 +1,30 @@
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem
+from PyQt5.QtGui import QColor
+from PyQt5.QtCore import Qt
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
-class MyWindow(QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.initUI()
+        self.table = QTableWidget(5, 2, self)  # Create a table with 5 rows and 2 columns
+        self.setCentralWidget(self.table)
 
-    def initUI(self):
-        self.setWindowTitle('Get Values from QTableWidget')
-        self.setGeometry(100, 100, 800, 600)
+        for i in range(5):  # For each row
+            for j in range(2):  # For each column
+                item = QTableWidgetItem(f"Item {i}-{j}")
+                if j == 1:  # If the column number is 1
+                    item.setFlags(item.flags() & ~Qt.ItemIsSelectable)  # Make the item not selectable
+                self.table.setItem(i, j, item)
 
-        layout = QVBoxLayout()
+        self.table.itemSelectionChanged.connect(self.print_selected_item)
 
-        self.tableWidget = QTableWidget(self)
-        self.tableWidget.setColumnCount(3)  # Số cột là 3 để minh họa
-        layout.addWidget(self.tableWidget)
+    def print_selected_item(self):
+        selected_items = self.table.selectedItems()
+        if selected_items:
+            print(selected_items[0].text())
 
-        central_widget = QWidget()
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
-
-    def getValuesFromTable(self, row, column):
-        if row < 0 or row >= self.tableWidget.rowCount() or column < 0 or column >= self.tableWidget.columnCount():
-            return None
-
-        item = self.tableWidget.item(row, column)
-        if item is not None:
-            return item.text()
-        else:
-            return None
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = MyWindow()
-    window.show()
-
-    # Đặt giá trị vào các ô trong bảng
-    for row in range(3):
-        for column in range(3):
-            item = QTableWidgetItem(f'Value {row}-{column}')
-            window.tableWidget.setItem(row, column, item)
-
-    # Lấy giá trị từ ô ở hàng 1, cột 2 (index 0-based)
-    row_index = 1
-    col_index = 2
-    value = window.getValuesFromTable(row_index, col_index)
-    if value is not None:
-        print(f'Value at row {row_index}, column {col_index}: {value}')
-
-    sys.exit(app.exec_())
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+sys.exit(app.exec_())
