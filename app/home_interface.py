@@ -43,8 +43,6 @@ class ThreadWorker(QThread):
         self.kwargs = kwargs
 
     def run(self):
-        print(self.args)
-        print(self.kwargs)
 
         try:
             result = self.target_function(*self.args, **self.kwargs)
@@ -124,12 +122,16 @@ class HomeInterface(QWidget,Ui_Frame):
             w.start() 
     def downloadBk(self,ip,title):
         curdir = dirname(__file__)
+        root_path = dirname(curdir)
+
+        backup_path = join(root_path,'BackupData')
+
         app = ATT_DAV(ip)
         results = app.client.list()
         for result in results:
             if 'TelegramCS' in result:
                 data_folder = result + 'data'
-                local_path = join(curdir,'BackupData',f'data_{ip}/{data_folder}')
+                local_path = join(backup_path,f'data_{ip}/{data_folder}')
                 os.makedirs(dirname(local_path),exist_ok=True)
                 app.client.download_sync(remote_path=data_folder,local_path=local_path)
         return True

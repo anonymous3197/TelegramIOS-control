@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication,QWidget
 from PyQt5.QtCore import Qt, QSize
 
 from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, darkdetect, Theme
@@ -8,7 +8,8 @@ from qfluentwidgets import InfoBar, InfoBarPosition
 
 from .home_interface import HomeInterface
 from .configs_interface import ConfigInterface
-from .setting_interface import SettingInterface
+# from .setting_interface import SettingInterface
+from .settings.setting_interface import SettingInterface
 
 
 class MainWindow(MSFluentWindow):
@@ -18,12 +19,11 @@ class MainWindow(MSFluentWindow):
         self.setMicaEffectEnabled(False)
 
         self.initWindow()
-
+        self.subMainWindow = QWidget(self)
         # create sub interface
         self.homeInterface = HomeInterface(self)
         self.configInterface =ConfigInterface(self)
         # self.settingInterface = SettingInterface(self)
-
         self.initNavigation()
         self.splashScreen.finish()
 
@@ -31,7 +31,8 @@ class MainWindow(MSFluentWindow):
         # add navigation items
         self.addSubInterface(self.homeInterface, FIF.HOME, self.tr('Trang chủ'))
         self.addSubInterface(self.configInterface, FIF.CONNECT, self.tr('Configs'))
-        # self.addSubInterface(self.settingInterface,FIF.SETTING,"Setting",position=NavigationItemPosition.BOTTOM)
+        # self.addSubInterface(self.settingInterface, FIF.SETTING, self.tr('Setting'), position=NavigationItemPosition.BOTTOM)
+
     def toggleTheme(self):
         toggleTheme()
 

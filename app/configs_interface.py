@@ -13,7 +13,8 @@ from modules.webDAV import ATT_DAV
 from uuid import uuid4
 
 curdir = dirname(__file__)
-temp_path = join(curdir,'Temp')
+root_path = dirname(curdir)
+temp_path = join(root_path,'Temp')
         #Create Temp if not exist
 os.makedirs(temp_path,exist_ok=True)
 class ThreadLogReport(QThread):
