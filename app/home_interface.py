@@ -10,7 +10,7 @@ from modules.ATT import ATAPI
 from modules.webDAV import ATT_DAV
 from UI.Ui_homepage import Ui_Frame
 from os.path import dirname,join
-                
+from .config import cfg
 class ThreadLoadDevice(QThread):
     deviceSignal = pyqtSignal(str,bool)
     finished = pyqtSignal()
@@ -20,8 +20,10 @@ class ThreadLoadDevice(QThread):
         self.ip = str(ip)
     def run(self):
             try:
-                host = "192.168.3." +self.ip
-                app = ATT_DAV(f'192.168.3.{self.ip}')
+                
+                subnet = cfg.defaultGateWay.value.rsplit('.', 1)[0] + '.'
+                host = subnet +self.ip
+                app = ATT_DAV(host)
                 result = app.client.list()
                 if result:
                     client = ATAPI(host)
@@ -220,7 +222,6 @@ class HomeInterface(QWidget,Ui_Frame):
             print(e)
             return False
     def btnRespring_Clicked(self):
-        print("btnRespring_Clicked ")
         workerThread = []
         for ip in self.selected_items:
             worker = ThreadWorker(self.reSpringIOS,self,ip,title="Respring Device")
@@ -240,8 +241,8 @@ class HomeInterface(QWidget,Ui_Frame):
             w.start()
 
     def stopScript_Clicked(self):
-        print("stopScript_Clicked ")
         pathScript = self.uic.txtPathRemote.toPlainText()
+        # pathScript = cfg.runningFolder.value + 'main.py'
         mode = "STOP"
         workerThread = []
         for ip in self.selected_items:
@@ -256,7 +257,7 @@ class HomeInterface(QWidget,Ui_Frame):
         if mode == "STOP":
             app = ATT_DAV(ip)
             content = {"close": 1}
-            result = app.update_file(r'TelegramCS_V3/configs/close_configs.json', content)
+            result = app.update_file(f'{cfg.runningFolder}/configs/close_configs.json', content)
             return result
         elif mode == "START":
             api = ATAPI(ip)

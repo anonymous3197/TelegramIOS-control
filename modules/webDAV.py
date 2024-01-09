@@ -12,7 +12,7 @@ class ATT_DAV:
         'webdav_hostname': "http://"+self.host,
         'webdav_login':    "root",
         'webdav_password': "alpine",
-        'webdav_timeout': 3
+        'webdav_timeout': 5
         }
         self.client = Client(self.options)
         self.client.verify = False

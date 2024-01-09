@@ -86,7 +86,6 @@ class ConfigInterface(QWidget,Ui_ConfigsInterface):
         row = item.row()
         column = item.column()
         new_value = item.text()
-        print(f"Item at row {row}, column {column} changed to: {new_value}")
     def btnEnableEdit_Clicked(self):
         self.uic.TableWidgetDevices.setEditTriggers(QTableWidget.NoEditTriggers)
         
@@ -101,7 +100,6 @@ class ConfigInterface(QWidget,Ui_ConfigsInterface):
                 rowData.append(item.text())
             
             self.selectedRowData = rowData
-            print(f'Selected Row Data: {self.selectedRowData}')
             workerLog = ThreadLogReport(self.selectedRowData[0],self)
             workerLog.SignalLog.connect(self.LogReporter)
             workerLog.SignalAnalytics.connect(self.LogAnalyticsReporter)
@@ -117,7 +115,6 @@ class ConfigInterface(QWidget,Ui_ConfigsInterface):
 
     def loadAllDevices(self):
         
-        print("Clicked")
         self.count =0
         self.workerThreadGetDevice=[]
         self.stateTooltip = None

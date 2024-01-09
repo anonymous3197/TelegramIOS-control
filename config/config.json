@@ -1,0 +1,10 @@
+{
+    "Script": {
+        "DefaultGateway": "192.168.3.1",
+        "FolderTool": "TelegramCS_V3"
+    },
+    "QFluentWidgets": {
+        "ThemeColor": "#ff009faa",
+        "ThemeMode": "Light"
+    }
+}

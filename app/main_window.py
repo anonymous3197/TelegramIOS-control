@@ -9,7 +9,7 @@ from qfluentwidgets import InfoBar, InfoBarPosition
 from .home_interface import HomeInterface
 from .configs_interface import ConfigInterface
 # from .setting_interface import SettingInterface
-from .settings.setting_interface import SettingInterface
+from .setting_interface import SettingInterface
 
 
 class MainWindow(MSFluentWindow):
@@ -23,7 +23,7 @@ class MainWindow(MSFluentWindow):
         # create sub interface
         self.homeInterface = HomeInterface(self)
         self.configInterface =ConfigInterface(self)
-        # self.settingInterface = SettingInterface(self)
+        self.settingInterface = SettingInterface(self)
         self.initNavigation()
         self.splashScreen.finish()
 
@@ -31,7 +31,7 @@ class MainWindow(MSFluentWindow):
         # add navigation items
         self.addSubInterface(self.homeInterface, FIF.HOME, self.tr('Trang chủ'))
         self.addSubInterface(self.configInterface, FIF.CONNECT, self.tr('Configs'))
-        # self.addSubInterface(self.settingInterface, FIF.SETTING, self.tr('Setting'), position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.settingInterface, FIF.SETTING, self.tr('Setting'), position=NavigationItemPosition.BOTTOM)
 
     def toggleTheme(self):
         toggleTheme()
